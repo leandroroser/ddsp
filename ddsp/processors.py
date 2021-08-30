@@ -232,3 +232,19 @@ class Mix(Processor):
     mix_level_one = tf.sqrt(tf.abs(mix_level))
     mix_level_two = 1.0 - tf.sqrt(tf.abs(mix_level - 1.0))
     return mix_level_one * signal_one + mix_level_two * signal_two
+
+
+@gin.register
+class CenterCrop(Processor):
+  """Remove audio padding created from using centered frames."""
+
+  def __init__(self, frame_size: int, name: Text = 'center_crop'):
+    super().__init__(name=name)
+    self.frame_size = frame_size
+
+  def get_controls(self, audio: tf.Tensor) -> TensorDict:
+    """Just pass signals through."""
+    return {'audio': audio}
+
+  def get_signal(self, audio: tf.Tensor) -> tf.Tensor:
+    return core.center_crop(audio, self.frame_size)

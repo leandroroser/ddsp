@@ -143,11 +143,27 @@ class StreamingF0PwInference(models.Autoencoder):
     parse_operative_config(ckpt)
 
     # Set streaming specific params.
-    time_steps = gin.query_parameter('F0PowerPreprocessor.time_steps')
     n_samples = gin.query_parameter('Harmonic.n_samples')
+    preprocessor_str = gin.query_parameter('Autoencoder.preprocessor')
+    preprocessor_str = preprocessor_str.split('@')[1].split('()')[0]
+    print('!!!!!!!!!!', preprocessor_str)
+    time_steps = gin.query_parameter(f'{preprocessor_str}.time_steps')
+    n_samples = gin.query_parameter(f'{preprocessor_str}.n_samples')
     samples_per_frame = int(n_samples / time_steps)
-    config = [
-        'F0PowerPreprocessor.time_steps = 1',
+
+    if preprocessor_str == 'F0PowerPreprocessor':
+      config = [
+          'F0PowerPreprocessor.time_steps = 1',
+      ]
+    elif preprocessor_str == 'OnlineF0PowerPreprocessor':
+      config = [
+          'OnlineF0PowerPreprocessor.center_power = False',
+          'OnlineF0PowerPreprocessor.compute_power = False',
+          'OnlineF0PowerPreprocessor.center_f0 = False',
+          'OnlineF0PowerPreprocessor.compute_f0 = False',
+      ]
+
+    config += [
         f'Harmonic.n_samples = {samples_per_frame}',
         f'FilteredNoise.n_samples = {samples_per_frame}',
     ]
